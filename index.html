@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>A-Frame • Start position + mouse move + background</title>
+  <title>A-Frame • Start at Origin + Teleport + Mouse Move</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
-    body{margin:0}
-    /* Prevent default browser gestures so mouse hold works cleanly */
+    body { margin:0 }
+    /* Make mouse movement consistent (and allow right-click hold) */
     html, body, canvas { touch-action: none; }
   </style>
 </head>
@@ -15,45 +15,64 @@
     <!-- Solid background color -->
     <a-sky color="#BBDFFF"></a-sky>
 
-    <!-- Start/origin point: set your desired initial position here -->
-    <a-entity id="start-point" position="4 1.6 0"></a-entity>
+    <!-- Start point at the scene origin (x y z) = (0, 1.6, 0) -->
+    <a-entity id="start-point" position="0 1.6 0"></a-entity>
 
-    <!-- Rig: look with mouse; walk by holding mouse buttons -->
-    <a-entity id="rig" position="0 1.6 0" mouse-walk="speed: 1.6; backSpeed: 1.2">
+    <!-- RIG: look with mouse, move with keyboard and mouse (hold) -->
+    <a-entity id="rig" wasd-controls position="0 1.6 0" mouse-walk="speed: 1.6; backSpeed: 1.2">
       <a-entity camera look-controls></a-entity>
     </a-entity>
+
+    <!-- Mouse cursor to click the teleport box -->
+    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
+
+    <!-- Teleport box located at the origin (x=0, y=1, z=0) -->
+    <a-box id="teleport-box" class="interactable"
+           position="0 1 0" width="0.6" height="0.6" depth="0.6"
+           color="#FFC107" teleport-on-click></a-box>
   </a-scene>
 
   <script>
-    // Move rig to start-point when the scene loads
+    // On scene load: move rig to the start point
     document.getElementById('scene').addEventListener('loaded', () => {
       const rig   = document.getElementById('rig');
       const start = document.getElementById('start-point').object3D.position;
-      rig.object3D.position.copy(start);
+      if (rig) rig.object3D.position.copy(start);
     });
 
-    // Minimal mouse-walk: hold LEFT = forward, RIGHT = backward
+    // Teleport: click the box to go back to the start point (origin)
+    AFRAME.registerComponent('teleport-on-click', {
+      init: function () {
+        this.el.addEventListener('click', () => {
+          const rig   = document.getElementById('rig');
+          const start = document.getElementById('start-point').object3D.position;
+          if (rig) rig.object3D.position.copy(start);
+        });
+      }
+    });
+
+    // Mouse movement: hold LEFT to walk forward, RIGHT to walk backward
     AFRAME.registerComponent('mouse-walk', {
       schema: { speed: {default: 1.6}, backSpeed: {default: 1.2} },
       init: function () {
-        this.sign = 0;                       // 0 still, +1 forward, -1 backward
+        this.sign = 0; // 0 idle, +1 forward, -1 back
         this.dir  = new THREE.Vector3();
 
-        this._ctx = e => e.preventDefault(); // allow right-click hold without menu
+        this._ctx = e => e.preventDefault(); // allow right-click hold
         window.addEventListener('contextmenu', this._ctx);
 
-        this._md = e => { this.sign = (e.button === 2) ? -1 : +1; };
-        this._mu = () => { this.sign = 0; };
+        this._md = (e) => { this.sign = (e.button === 2) ? -1 : +1; };
+        this._mu = ()   => { this.sign = 0; };
         window.addEventListener('mousedown', this._md);
         window.addEventListener('mouseup',   this._mu);
         window.addEventListener('blur',      this._mu);
       },
       tick: function (t, dt) {
         if (this.sign === 0) return;
-        const cam = this.el.sceneEl.camera;
+        const cam = this.el.sceneEl && this.el.sceneEl.camera;
         if (!cam) return;
 
-        // Forward from camera (flatten Y)
+        // Forward direction based on camera (flatten Y)
         this.dir.set(0, 0, -1).applyQuaternion(cam.quaternion);
         this.dir.y = 0; this.dir.normalize();
 
