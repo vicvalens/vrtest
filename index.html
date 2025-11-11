@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Step 6 • Floating GLB + Audio (minimal)</title>
+  <title>Step 6</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>body{margin:0}</style>
 </head>
@@ -11,7 +11,7 @@
     <!-- Solid background -->
     <a-sky color="#BBDFFF"></a-sky>
 
-    <!-- Minimal light so the GLB is visible (PBR) -->
+    <!-- Light so the GLB is visible (PBR) -->
     <a-entity light="type: hemisphere; intensity: 1; groundColor: #666" position="0 4 0"></a-entity>
 
     <!-- Rig: look with mouse, move with keyboard -->
@@ -28,7 +28,7 @@
       <audio id="mp3" src="sound.mp3" preload="auto"></audio>
     </a-assets>
 
-    <!-- (1) Floating 3D model (replaces the box) -->
+    <!-- (1) Floating 3D model -->
     <a-entity gltf-model="#model"
               position="0 1.4 -3" scale="1 1 1" rotation="0 20 0"
               animation="property: object3D.position.y; to: 1.7; dir: alternate; dur: 1500; loop: true">
