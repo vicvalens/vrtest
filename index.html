@@ -4,21 +4,31 @@
   <meta charset="utf-8">
   <title>VR Scene</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <style>body{margin:0}</style>
 </head>
 <body>
-  <a-scene>
+  <a-scene renderer="physicallyCorrectLights: true">
+    <a-assets>
+      <a-asset-item id="model" src="3Dmodel.glb"></a-asset-item>
+      <video id="demo" src="video.mp4" muted playsinline loop autoplay preload="auto"></video>
+    </a-assets>
 
-  <a-assets>
-    <a-asset-item id="model" src="3Dmodel.glb"></a-asset-item>
-    <video id="demo" src="video.mp4" muted playsinline loop></video>
-  </a-assets>
-  
-  <a-entity gltf-model="#model" position="0 0 -3" scale="1 1 1"></a-entity>
+    <!-- LUCES -->
+    <a-entity light="type: hemisphere; color: #fff; groundColor: #666; intensity: 1.0" position="0 4 0"></a-entity>
+    <a-entity light="type: directional; color: #fff; intensity: 0.8" position="2 4 -2"></a-entity>
 
-  <a-sky src="360image.jpg" rotation="0 -90 0"></a-sky>
-    
-  <a-video src="#demo" position="0 2 -5" width="4" height="2"></a-video>
-    
+    <!-- CÁMARA a 1.6m -->
+    <a-entity camera look-controls position="0 1.6 0"></a-entity>
+
+    <!-- MODELO: más cerca y a altura de cámara -->
+    <a-entity gltf-model="#model" position="0 1.2 -2" rotation="0 30 0" scale="1 1 1"></a-entity>
+
+    <!-- FONDO 360 -->
+    <a-sky src="360image.jpg" rotation="0 -90 0"></a-sky>
+
+    <!-- PANTALLA DE VIDEO -->
+    <a-video src="#demo" position="0 1.5 -3.5" width="3.2" height="1.8"></a-video>
   </a-scene>
 </body>
 </html>
+
