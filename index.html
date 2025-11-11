@@ -2,50 +2,38 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Step 5</title>
+  <title>Step 6 • Minimal Animation + Audio</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>body{margin:0}</style>
 </head>
 <body>
   <a-scene>
-    <!-- Background color -->
+    <!-- Solid background color -->
     <a-sky color="#BBDFFF"></a-sky>
 
-    <!-- Start point -->
-    <a-entity id="start-point" position="0 1.6 0"></a-entity>
-
-    <!-- RIG: (WASD/keyboard arrows) -->
+    <!-- Rig: look with mouse, move with keyboard (WASD/arrows) -->
     <a-entity id="rig" wasd-controls position="0 1.6 0">
       <a-entity camera look-controls></a-entity>
     </a-entity>
 
-    <!-- Cursor -->
+    <!-- Mouse cursor to click interactables -->
     <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
 
-    <!-- Teletransport object -->
-    <a-box class="interactable"
-           position="0 1 -2" width="0.6" height="0.6" depth="0.6"
-           color="#FFC107" teleport-on-click></a-box>
+    <!-- (1) Floating object (simple up/down animation) -->
+    <a-box position="0 2 -3" scale="1 1 1" color="#FF7F50"
+           animation="property: object3D.position.y; to: 2.4; dir: alternate; dur: 1500; loop: true">
+    </a-box>
+
+    <!-- (2) Clickable object that plays an MP3 on demand -->
+    <a-sphere class="interactable" position="1.5 1.25 -2.5" radius="0.4" color="#3399FF"
+              onclick="document.querySelector('#hit-sound').components.sound.playSound()">
+    </a-sphere>
+
+    <!-- Audio asset + sound component (no autoplay; plays on click) -->
+    <a-assets>
+      <audio id="mp3" src="sound.mp3" preload="auto"></audio>
+    </a-assets>
+    <a-sound id="hit-sound" src="#mp3" autoplay="false"></a-sound>
   </a-scene>
-
-  <script>
-    // Center ojects at start
-    document.querySelector('a-scene').addEventListener('loaded', () => {
-      const rig = document.getElementById('rig');
-      const p   = document.getElementById('start-point').object3D.position;
-      rig.object3D.position.copy(p);
-    });
-
-    // Teletransport position on click
-    AFRAME.registerComponent('teleport-on-click', {
-      init: function () {
-        this.el.addEventListener('click', () => {
-          const rig = document.getElementById('rig');
-          const p   = document.getElementById('start-point').object3D.position;
-          rig.object3D.position.copy(p);
-        });
-      }
-    });
-  </script>
 </body>
 </html>
