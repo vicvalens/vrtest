@@ -2,32 +2,36 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>A-Frame • Step 5 (minimal teleport)</title>
+  <title>A-Frame • Step 5 (teleport + mouse move)</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <style>body{margin:0}</style>
+  <style>
+    body { margin:0 }
+    /* Prevent browser gestures so mouse/touch movement feels consistent */
+    html, body, canvas { touch-action: none; }
+  </style>
 </head>
 <body>
   <a-scene>
-    <!-- Fondo simple -->
+    <!-- Simple background -->
     <a-sky color="#BBDFFF"></a-sky>
 
-    <!-- Cámara dentro de un RIG (el que se teletransporta) -->
-    <a-entity id="rig" position="0 1.6 0">
+    <!-- RIG: look with mouse, move with keyboard (WASD) and with mouse (hold) -->
+    <a-entity id="rig" wasd-controls position="0 1.6 0" mouse-walk="speed: 1.6; backSpeed: 1.2">
       <a-entity camera look-controls></a-entity>
     </a-entity>
 
-    <!-- Cursor con raycast para poder hacer click con el mouse -->
+    <!-- Mouse cursor for clicking interactables (like the teleport box) -->
     <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
 
-    <!-- Botón de teletransporte (haz click sobre esta caja) -->
+    <!-- Teleport button -->
     <a-box class="interactable" position="0 1.25 -2" color="#FFC107" teleport-on-click></a-box>
 
-    <!-- Punto de destino (dónde aparecerá el RIG) -->
+    <!-- Teleport destination -->
     <a-entity id="teleport-point" position="4 1.6 0"></a-entity>
   </a-scene>
 
-  <!-- Componente mínimo de teletransporte -->
   <script>
+    // Teleport: click the box to move the rig to #teleport-point
     AFRAME.registerComponent('teleport-on-click', {
       init: function () {
         this.el.addEventListener('click', () => {
@@ -35,6 +39,44 @@
           const p   = document.getElementById('teleport-point').object3D.position;
           if (rig) rig.object3D.position.copy(p);
         });
+      }
+    });
+
+    // Mouse movement: hold LEFT mouse to walk forward, RIGHT mouse to walk backward.
+    // (Keyboard still works via wasd-controls.)
+    AFRAME.registerComponent('mouse-walk', {
+      schema: { speed: {default: 1.6}, backSpeed: {default: 1.2} },
+      init: function () {
+        this.sign = 0; // 0 still, +1 forward, -1 backward
+        this.dir  = new THREE.Vector3();
+
+        this._ctx = e => e.preventDefault(); // allow right-click hold without menu
+        window.addEventListener('contextmenu', this._ctx);
+
+        this._md = (e) => { this.sign = (e.button === 2) ? -1 : +1; };
+        this._mu = ()   => { this.sign = 0; };
+        window.addEventListener('mousedown', this._md);
+        window.addEventListener('mouseup',   this._mu);
+        window.addEventListener('blur',      this._mu);
+      },
+      tick: function (t, dt) {
+        if (this.sign === 0) return;
+        const cam = this.el.sceneEl && this.el.sceneEl.camera;
+        if (!cam) return;
+
+        // Forward direction (flattened on XZ)
+        this.dir.set(0, 0, -1).applyQuaternion(cam.quaternion);
+        this.dir.y = 0; this.dir.normalize();
+
+        const spd  = this.sign > 0 ? this.data.speed : this.data.backSpeed;
+        const dist = spd * (dt / 1000) * this.sign;
+        this.el.object3D.position.addScaledVector(this.dir, dist);
+      },
+      remove: function () {
+        window.removeEventListener('contextmenu', this._ctx);
+        window.removeEventListener('mousedown',   this._md);
+        window.removeEventListener('mouseup',     this._mu);
+        window.removeEventListener('blur',        this._mu);
       }
     });
   </script>
