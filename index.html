@@ -2,35 +2,46 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>A-Frame • Step 4 (minimal toggle fixed)</title>
+  <title>A-Frame • Step 4 (minimal toggle boolean)</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>body{margin:0}</style>
 </head>
 <body>
   <a-scene>
-    <!-- Fondo sólido (azul claro) -->
+    <!-- Fondo sólido -->
     <a-sky color="#BBDFFF"></a-sky>
+
+    <!-- Assets -->
+    <a-assets>
+      <img id="img1" src="ola.png">
+    </a-assets>
 
     <!-- Cámara -->
     <a-entity camera look-controls position="0 1.6 0"></a-entity>
 
-    <!-- Cursor (raycast a .interactable) -->
+    <!-- Cursor con raycast a .interactable -->
     <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
 
-    <!-- Caja: toggle (usa exactamente tu función) -->
-    <a-box position="-1 1.25 -3" color="#FFFFFF" depth="0.2" height="0.8" width="1.2"
+    <!-- Botón: TOGGLE (booleano) -->
+    <a-box position="-0.8 1.25 -3" width="1.2" height="0.8" depth="0.2"
+           color="#FFFFFF"
            class="interactable"
-           onclick="const img=document.getElementById('revealed-image');img.setAttribute('visible', img.getAttribute('visible')==='false')">
+           onclick="
+             const img = document.getElementById('revealed-image');
+             img.setAttribute('visible', !img.getAttribute('visible'));
+           ">
     </a-box>
 
-    <!-- Imagen revelada/oculta -->
-    <a-image id="revealed-image" src="ola.png"
+    <!-- Imagen a mostrar/ocultar (centrada) -->
+    <a-image id="revealed-image" src="#img1"
              position="0 2 -3" width="2" height="1.2" visible="false">
     </a-image>
 
-    <!-- Caja: color aleatorio al hacer click -->
-    <a-box class="interactable" position="1 1.25 -3" color="#4CC3D9"
-           onclick="this.setAttribute('color','#'+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'))">
+    <!-- Caja: color aleatorio (al lado) -->
+    <a-box position="0.8 1.25 -3" width="1" height="1" depth="1"
+           color="#4CC3D9"
+           class="interactable"
+           onclick="this.setAttribute('color', '#'+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'))">
     </a-box>
   </a-scene>
 </body>
