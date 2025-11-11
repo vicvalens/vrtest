@@ -6,41 +6,37 @@
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
     body { margin:0 }
-    /* Make mouse movement consistent (and allow right-click hold) */
     html, body, canvas { touch-action: none; }
   </style>
 </head>
 <body>
   <a-scene id="scene">
-    <!-- Solid background color -->
     <a-sky color="#BBDFFF"></a-sky>
 
-    <!-- Start point at the scene origin (x y z) = (0, 1.6, 0) -->
+    <!-- Start at origin, camera height 1.6 m -->
     <a-entity id="start-point" position="0 1.6 0"></a-entity>
 
-    <!-- RIG: look with mouse, move with keyboard and mouse (hold) -->
     <a-entity id="rig" wasd-controls position="0 1.6 0" mouse-walk="speed: 1.6; backSpeed: 1.2">
       <a-entity camera look-controls></a-entity>
     </a-entity>
 
-    <!-- Mouse cursor to click the teleport box -->
     <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
 
-    <!-- Teleport box located at the origin (x=0, y=1, z=0) -->
+    <!-- Move the teleporter box IN FRONT of the camera (Z negative) -->
     <a-box id="teleport-box" class="interactable"
-           position="0 1 0" width="0.6" height="0.6" depth="0.6"
+           position="0 1 -2" width="0.6" height="0.6" depth="0.6"
            color="#FFC107" teleport-on-click></a-box>
   </a-scene>
 
   <script>
-    // On scene load: move rig to the start point
+    // Put the rig at the start point on load
     document.getElementById('scene').addEventListener('loaded', () => {
       const rig   = document.getElementById('rig');
       const start = document.getElementById('start-point').object3D.position;
       if (rig) rig.object3D.position.copy(start);
     });
 
-    // Teleport: click the box to go back to the start point (origin)
+    // Teleport back to the start point when clicking the box
     AFRAME.registerComponent('teleport-on-click', {
       init: function () {
         this.el.addEventListener('click', () => {
@@ -51,40 +47,33 @@
       }
     });
 
-    // Mouse movement: hold LEFT to walk forward, RIGHT to walk backward
+    // Mouse-walk: hold left = forward, right = backward
     AFRAME.registerComponent('mouse-walk', {
       schema: { speed: {default: 1.6}, backSpeed: {default: 1.2} },
       init: function () {
-        this.sign = 0; // 0 idle, +1 forward, -1 back
-        this.dir  = new THREE.Vector3();
-
-        this._ctx = e => e.preventDefault(); // allow right-click hold
+        this.sign = 0; this.dir = new THREE.Vector3();
+        this._ctx = e => e.preventDefault();
         window.addEventListener('contextmenu', this._ctx);
-
-        this._md = (e) => { this.sign = (e.button === 2) ? -1 : +1; };
-        this._mu = ()   => { this.sign = 0; };
+        this._md = e => { this.sign = (e.button === 2) ? -1 : +1; };
+        this._mu = () => { this.sign = 0; };
         window.addEventListener('mousedown', this._md);
         window.addEventListener('mouseup',   this._mu);
         window.addEventListener('blur',      this._mu);
       },
       tick: function (t, dt) {
-        if (this.sign === 0) return;
-        const cam = this.el.sceneEl && this.el.sceneEl.camera;
+        if (!this.sign) return;
+        const cam = this.el.sceneEl.camera;
         if (!cam) return;
-
-        // Forward direction based on camera (flatten Y)
-        this.dir.set(0, 0, -1).applyQuaternion(cam.quaternion);
+        this.dir.set(0,0,-1).applyQuaternion(cam.quaternion);
         this.dir.y = 0; this.dir.normalize();
-
-        const spd  = this.sign > 0 ? this.data.speed : this.data.backSpeed;
-        const dist = spd * (dt / 1000) * this.sign;
-        this.el.object3D.position.addScaledVector(this.dir, dist);
+        const spd = this.sign > 0 ? this.data.speed : this.data.backSpeed;
+        this.el.object3D.position.addScaledVector(this.dir, spd * dt / 1000 * this.sign);
       },
       remove: function () {
         window.removeEventListener('contextmenu', this._ctx);
-        window.removeEventListener('mousedown',   this._md);
-        window.removeEventListener('mouseup',     this._mu);
-        window.removeEventListener('blur',        this._mu);
+        window.removeEventListener('mousedown', this._md);
+        window.removeEventListener('mouseup',   this._mu);
+        window.removeEventListener('blur',      this._mu);
       }
     });
   </script>
