@@ -2,34 +2,70 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Minimal Teleport</title>
+  <title>A-Frame • Start position + mouse move + background</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <style>body{margin:0}</style>
+  <style>
+    body{margin:0}
+    /* Prevent default browser gestures so mouse hold works cleanly */
+    html, body, canvas { touch-action: none; }
+  </style>
 </head>
 <body>
-  <a-scene>
-    <!-- Camera: look around with mouse -->
-    <a-entity camera look-controls position="0 1.6 0"></a-entity>
+  <a-scene id="scene">
+    <!-- Solid background color -->
+    <a-sky color="#BBDFFF"></a-sky>
 
-    <!-- Mouse raycaster so we can click the box -->
-    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
+    <!-- Start/origin point: set your desired initial position here -->
+    <a-entity id="start-point" position="4 1.6 0"></a-entity>
 
-    <!-- Teleport trigger (click this box) -->
-    <a-box class="interactable" position="0 1.25 -2" color="#FFC107" teleport-on-click></a-box>
-
-    <!-- Teleport destination -->
-    <a-entity id="teleport-point" position="0 1.6 0"></a-entity>
+    <!-- Rig: look with mouse; walk by holding mouse buttons -->
+    <a-entity id="rig" position="0 1.6 0" mouse-walk="speed: 1.6; backSpeed: 1.2">
+      <a-entity camera look-controls></a-entity>
+    </a-entity>
   </a-scene>
 
   <script>
-    // Minimal teleport component
-    AFRAME.registerComponent('teleport-on-click', {
+    // Move rig to start-point when the scene loads
+    document.getElementById('scene').addEventListener('loaded', () => {
+      const rig   = document.getElementById('rig');
+      const start = document.getElementById('start-point').object3D.position;
+      rig.object3D.position.copy(start);
+    });
+
+    // Minimal mouse-walk: hold LEFT = forward, RIGHT = backward
+    AFRAME.registerComponent('mouse-walk', {
+      schema: { speed: {default: 1.6}, backSpeed: {default: 1.2} },
       init: function () {
-        this.el.addEventListener('click', () => {
-          const rigOrCam = document.querySelector('[camera]').parentEl || document.querySelector('[camera]');
-          const destPos  = document.getElementById('teleport-point').object3D.position;
-          if (rigOrCam) rigOrCam.object3D.position.copy(destPos);
-        });
+        this.sign = 0;                       // 0 still, +1 forward, -1 backward
+        this.dir  = new THREE.Vector3();
+
+        this._ctx = e => e.preventDefault(); // allow right-click hold without menu
+        window.addEventListener('contextmenu', this._ctx);
+
+        this._md = e => { this.sign = (e.button === 2) ? -1 : +1; };
+        this._mu = () => { this.sign = 0; };
+        window.addEventListener('mousedown', this._md);
+        window.addEventListener('mouseup',   this._mu);
+        window.addEventListener('blur',      this._mu);
+      },
+      tick: function (t, dt) {
+        if (this.sign === 0) return;
+        const cam = this.el.sceneEl.camera;
+        if (!cam) return;
+
+        // Forward from camera (flatten Y)
+        this.dir.set(0, 0, -1).applyQuaternion(cam.quaternion);
+        this.dir.y = 0; this.dir.normalize();
+
+        const spd  = this.sign > 0 ? this.data.speed : this.data.backSpeed;
+        const dist = spd * (dt / 1000) * this.sign;
+        this.el.object3D.position.addScaledVector(this.dir, dist);
+      },
+      remove: function () {
+        window.removeEventListener('contextmenu', this._ctx);
+        window.removeEventListener('mousedown',   this._md);
+        window.removeEventListener('mouseup',     this._mu);
+        window.removeEventListener('blur',        this._mu);
       }
     });
   </script>
