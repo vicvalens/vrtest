@@ -2,14 +2,22 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>VR Scene</title>
+  <title>VR Scene. 3d model & 360 environment</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <style>body{margin:0}</style>
 </head>
 <body>
   <a-scene>
-    <a-box position="0 1 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
-    <a-plane rotation="-90 0 0" width="10" height="10" color="#7BC8A4"></a-plane>
-    <a-sky color="#ECECEC"></a-sky>
+    <a-assets>
+      <a-asset-item id="model" src="3Dmodel.glb"></a-asset-item>
+      <img id="pano" src="360image.jpg">
+    </a-assets>
+
+    <!-- Modelo 3D -->
+    <a-entity gltf-model="#model" position="0 1.2 -2" scale="1 1 1"></a-entity>
+
+    <!-- Fondo 360 -->
+    <a-sky src="#pano" rotation="0 -90 0"></a-sky>
   </a-scene>
 </body>
 </html>
