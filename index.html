@@ -2,87 +2,101 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Hybrid movement (PC + Oculus) + Collisions</title>
+  <title>Hybrid movement (PC + Oculus) sin física + límites</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Core -->
+  <!-- A-Frame core -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <!-- Extras: movement-controls (keyboard + gamepad/VR sticks) -->
+  <!-- movement-controls (teclado + gamepad/sticks VR) -->
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-  <!-- Physics (static-body) -->
-  <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
-  <!-- Kinematic-body (for player collider) -->
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.physics.min.js"></script>
   <style>body{margin:0;background:#000}</style>
+
+  <script>
+  // Componente para "clamp" (topes) de posición dentro de un rectángulo
+  AFRAME.registerComponent('clamp-bounds', {
+    schema: {
+      minX: {type: 'number', default: -2.2},
+      maxX: {type: 'number', default:  2.2},
+      minZ: {type: 'number', default: -78},
+      maxZ: {type: 'number', default:   0}
+    },
+    tick: function () {
+      const p = this.el.object3D.position;
+      if (p.x < this.data.minX) p.x = this.data.minX;
+      if (p.x > this.data.maxX) p.x = this.data.maxX;
+      if (p.z < this.data.minZ) p.z = this.data.minZ;
+      if (p.z > this.data.maxZ) p.z = this.data.maxZ;
+    }
+  });
+  </script>
 </head>
 <body>
-  <a-scene physics="gravity: 0"
-           renderer="antialias: true; physicallyCorrectLights: true; colorManagement: true; toneMapping: ACESFilmicToneMapping"
+  <a-scene renderer="antialias: true; physicallyCorrectLights: true; colorManagement: true; toneMapping: ACESFilmicToneMapping"
            shadow="type: pcfsoft">
 
-    <!-- Lights -->
+    <!-- Luz -->
     <a-entity light="type: ambient; intensity: 0.45"></a-entity>
     <a-entity id="sun" light="type: directional; intensity: 1.2; castShadow: true"
               position="6 10 6" rotation="-45 30 0"></a-entity>
 
-    <!-- PLAYER RIG: hybrid controls + collider -->
+    <!-- RIG: movimiento híbrido + topes de corredor (sin física) -->
     <a-entity id="rig"
               position="0 1.6 -2"
               movement-controls="controls: gamepad,keyboard; speed: 0.22"
-              kinematic-body="radius: 0.35; height: 1.6">
+              clamp-bounds="minX:-2.2; maxX:2.2; minZ:-78; maxZ:0">
       <a-entity id="camera" camera look-controls>
-        <!-- HUD timer (optional) -->
+        <!-- HUD (opcional) -->
         <a-entity id="hud" position="0 0.35 -1.2">
           <a-plane width="0.6" height="0.22" color="#000" opacity="0.28"></a-plane>
           <a-text id="timerText" value="00:00" align="center" width="1.8" position="0 0 0.01" color="#FFF"></a-text>
         </a-entity>
       </a-entity>
-      <!-- VR laser pointers (optional) -->
+      <!-- Rayos VR (opcional) -->
       <a-entity laser-controls="hand: left"></a-entity>
       <a-entity laser-controls="hand: right"></a-entity>
     </a-entity>
 
-    <!-- Mouse cursor (desktop) -->
+    <!-- Cursor mouse (escritorio) -->
     <a-entity cursor="rayOrigin: mouse"></a-entity>
 
-    <!-- Floor & walls with colliders -->
+    <!-- Piso y “muros” (solo visual; los límites reales los hace clamp-bounds) -->
     <a-plane rotation="-90 0 0" width="20" height="80" position="0 0 -40"
-             material="color: #ffffff" shadow="receive: true" static-body></a-plane>
+             material="color: #ffffff" shadow="receive: true"></a-plane>
 
     <a-box position="-2.5 1.2 -40" depth="80" height="2.4" width="0.25"
-           color="#bac6d1" shadow="cast: true" static-body></a-box>
+           color="#bac6d1" shadow="cast: true"></a-box>
     <a-box position=" 2.5 1.2 -40" depth="80" height="2.4" width="0.25"
-           color="#bac6d1" shadow="cast: true" static-body></a-box>
+           color="#bac6d1" shadow="cast: true"></a-box>
     <a-box position="0 1.2 0" depth="0.25" height="2.4" width="5"
-           color="#c6cfd8" shadow="cast: true" static-body></a-box>
+           color="#c6cfd8" shadow="cast: true"></a-box>
 
-    <!-- START text centered -->
+    <!-- START centrado -->
     <a-text value="START" position="0 1.2 -3" align="center" width="6" color="#003366"
             animation="property: position; to: 0 1.35 -3; dir: alternate; dur: 1400; loop: true; easing: easeInOutSine"></a-text>
 
-    <!-- A few collidable props -->
+    <!-- Props de referencia -->
     <a-sphere position="-1 0.8 -10" radius="0.4"
               material="metalness: 1; roughness: 0.08; color: #888"
-              shadow="cast: true" static-body></a-sphere>
+              shadow="cast: true"></a-sphere>
 
     <a-box position="1 0.9 -20" width="0.9" height="0.9" depth="0.9"
            material="color: #aaccff; opacity: 0.35; transparent: true; metalness: 0.15; roughness: 0.05"
-           shadow="cast: true" static-body></a-box>
+           shadow="cast: true"></a-box>
 
     <a-cone position="0 1.0 -30" radius-bottom="0.6" height="1.2"
             material="color: #ff4fd7; metalness: 0; roughness: 0.25"
-            shadow="cast: true" static-body></a-cone>
+            shadow="cast: true"></a-cone>
   </a-scene>
 
   <script>
-    // Simple background + reflections
+    // Fondo cielo + reflejos suaves
     const sceneEl = document.querySelector('a-scene');
     function makeEquirectGradient(w=2048,h=1024){
       const c = document.createElement('canvas'); c.width=w; c.height=h;
       const g = c.getContext('2d');
       const grad = g.createLinearGradient(0,0,0,h);
-      grad.addColorStop(0.00, '#9fc9ff');
+      grad.addColorStop(0.00, '#9fc9ff');  // azul zenit
       grad.addColorStop(0.65, '#cfe6ff');
-      grad.addColorStop(1.00, '#d8dbe0');
+      grad.addColorStop(1.00, '#d8dbe0');  // horizonte gris
       g.fillStyle = grad; g.fillRect(0,0,w,h);
       return new THREE.CanvasTexture(c);
     }
@@ -95,7 +109,7 @@
       sceneEl.object3D.background = tex;
       sceneEl.object3D.environment = pmrem.fromEquirectangular(tex).texture;
 
-      // Softer shadows
+      // Sombra más suave
       const sun = document.getElementById('sun').getObject3D('light');
       if (sun && sun.shadow) {
         sun.shadow.mapSize.set(1024,1024);
@@ -104,7 +118,7 @@
         sun.shadow.normalBias = 0.02;
       }
 
-      // Tiny timer (optional)
+      // Pequeño timer (opcional)
       const t0 = performance.now();
       const tt = document.getElementById('timerText');
       (function tick(){
