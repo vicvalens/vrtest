@@ -2,35 +2,37 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Step 11 – Corridor with START + HUD Timer + Collisions</title>
+  <title>Corridor – START + Timer + Collisions (fixed)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- A-Frame core -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <!-- movement-controls + laser-controls + kinematic-body -->
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@latest/dist/aframe-extras.min.js"></script>
-  <!-- Physics (for static-body colliders) -->
+  <!-- movement-controls + laser-controls -->
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+  <!-- Physics system (Ammo.js) -->
   <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
+  <!-- Kinematic-body component (de aframe-extras.physics) -->
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.physics.min.js"></script>
   <style>body{margin:0;background:#000}</style>
 </head>
 <body>
-  <!-- Physics enabled (no gravity so the rig doesn’t fall) -->
+  <!-- Activa física sin gravedad -->
   <a-scene
     physics="gravity: 0"
     renderer="antialias: true; physicallyCorrectLights: true; colorManagement: true; toneMapping: ACESFilmicToneMapping"
     shadow="type: pcfsoft">
 
-    <!-- Lights -->
+    <!-- Luces -->
     <a-entity light="type: ambient; intensity: 0.45"></a-entity>
     <a-entity id="sun" light="type: directional; intensity: 1.25; castShadow: true"
               position="6 10 6" rotation="-45 30 0"></a-entity>
 
-    <!-- RIG: inside the corridor, collisions ON (kinematic-body) -->
+    <!-- RIG dentro del pasillo, con colisiones (kinematic-body) -->
     <a-entity id="rig"
               position="0 1.6 -2"
               movement-controls="controls: gamepad,keyboard; speed: 0.22"
               kinematic-body="radius: 0.35; height: 1.6">
       <a-entity id="camera" camera look-controls>
-        <!-- HUD TIMER (top centered in view) -->
+        <!-- HUD TIMER arriba y centrado -->
         <a-entity id="hud" position="0 0.35 -1.2">
           <a-plane width="0.6" height="0.22" color="#000000" opacity="0.28"></a-plane>
           <a-text id="timerText" value="00:00" align="center" width="1.8" position="0 0 0.01" color="#FFFFFF"></a-text>
@@ -40,28 +42,28 @@
       <a-entity laser-controls="hand: right"></a-entity>
     </a-entity>
 
-    <!-- Optional mouse cursor (desktop) -->
+    <!-- Cursor de mouse (opcional escritorio) -->
     <a-entity cursor="rayOrigin: mouse"></a-entity>
 
-    <!-- FLOOR: solid white, receives shadows, has collider -->
+    <!-- Piso blanco, con collider -->
     <a-plane id="floor" rotation="-90 0 0" width="20" height="80" position="0 0 -40"
              material="color: #ffffff; metalness: 0; roughness: 1"
              shadow="receive: true" static-body></a-plane>
 
-    <!-- Corridor walls with colliders -->
+    <!-- Muros con colliders -->
     <a-box position="-2.5 1.2 -40" depth="80" height="2.4" width="0.25"
            color="#bac6d1" shadow="cast: true" static-body></a-box>
     <a-box position=" 2.5 1.2 -40" depth="80" height="2.4" width="0.25"
            color="#bac6d1" shadow="cast: true" static-body></a-box>
-    <!-- Entrance lintel (optional collider) -->
+    <!-- Dintel de entrada (opcional collider) -->
     <a-box position="0 1.2 0" depth="0.25" height="2.4" width="5"
            color="#c6cfd8" shadow="cast: true" static-body></a-box>
 
-    <!-- START text: centered, slightly in front; floating -->
-    <a-text value="START" position="0 2 -3" align="center" width="6" color="#003366"
-            animation="property: position; to: 0 2.2 -3; dir: alternate; dur: 1400; loop: true; easing: easeInOutSine"></a-text>
+    <!-- START centrado en X, a mitad de altura (y=1.2) y delante (z=-3) -->
+    <a-text value="START" position="0 1.2 -3" align="center" width="6" color="#003366"
+            animation="property: position; to: 0 1.35 -3; dir: alternate; dur: 1400; loop: true; easing: easeInOutSine"></a-text>
 
-    <!-- Props along the corridor (all with colliders) -->
+    <!-- Props con colliders (chocas con ellos) -->
     <a-sphere position="-1 0.8 -10" radius="0.4"
               material="metalness: 1; roughness: 0.08; color: #888"
               shadow="cast: true" static-body></a-sphere>
@@ -74,11 +76,11 @@
             material="color: #ff4fd7; metalness: 0.0; roughness: 0.25"
             shadow="cast: true" static-body></a-cone>
 
-    <!-- Small obstruction -->
+    <!-- Obstrucción -->
     <a-box position="0 0.75 -45" width="1.2" height="1.5" depth="0.6"
            color="#9fb3c8" shadow="cast: true" static-body></a-box>
 
-    <!-- Exit -->
+    <!-- Salida -->
     <a-plane position="0 1.5 -78" rotation="0 0 0" width="3" height="2"
              material="color: #5ad08f" shadow="cast: true" static-body></a-plane>
     <a-text value="EXIT" position="0 1.5 -77.98" align="center" width="6" color="#063a21"></a-text>
@@ -86,16 +88,16 @@
   </a-scene>
 
   <script>
-    // Day-sky gradient as equirect + PMREM environment for reflections
+    // Cielo día en gradiente (equirect) + PMREM para reflejos
     const sceneEl = document.querySelector('a-scene');
 
     function makeEquirectGradient(w=2048,h=1024){
       const c = document.createElement('canvas'); c.width=w; c.height=h;
       const g = c.getContext('2d');
       const grad = g.createLinearGradient(0,0,0,h);
-      grad.addColorStop(0.00, '#9fc9ff');  // zenith blue
-      grad.addColorStop(0.65, '#cfe6ff');  // mid sky
-      grad.addColorStop(1.00, '#d8dbe0');  // horizon gray
+      grad.addColorStop(0.00, '#9fc9ff');
+      grad.addColorStop(0.65, '#cfe6ff');
+      grad.addColorStop(1.00, '#d8dbe0');
       g.fillStyle = grad; g.fillRect(0,0,w,h);
       return new THREE.CanvasTexture(c);
     }
@@ -110,7 +112,7 @@
       const envRT = pmrem.fromEquirectangular(tex);
       sceneEl.object3D.environment = envRT.texture;
 
-      // Soften sun shadows
+      // Sombras suaves del "sol"
       const sun = document.getElementById('sun').getObject3D('light');
       if (sun && sun.shadow) {
         sun.shadow.mapSize.set(1024,1024);
@@ -123,7 +125,7 @@
         cam.updateProjectionMatrix();
       }
 
-      // Simple HUD timer (counts up)
+      // Timer HUD
       const t0 = performance.now();
       const timerText = document.getElementById('timerText');
       function updateTimer(){
