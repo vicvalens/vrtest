@@ -2,80 +2,113 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Step 11 – Walkable Space (PC + VR)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Step 11 – Walkable Corridor (PC + VR, day sky, shadows, reflections)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- A-Frame core -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <!-- Extras: movement-controls (keyboard + VR gamepad) & laser-controls -->
+  <!-- movement-controls + laser-controls -->
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@latest/dist/aframe-extras.min.js"></script>
   <style>body{margin:0;background:#000}</style>
 </head>
 <body>
-  <a-scene renderer="antialias: true">
+  <a-scene
+    renderer="antialias: true; physicallyCorrectLights: true; colorManagement: true; toneMapping: ACESFilmicToneMapping"
+    shadow="type: pcfsoft">
 
-    <!-- Assets: gradient sky as inline SVG (horizon gray → sky blue) -->
-    <a-assets>
-      <img id="skygrad" crossorigin="anonymous"
-           src="data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' width='2' height='2'>\
-<defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'>\
-<stop offset='0%' stop-color='%239fc9ff'/>\
-<stop offset='65%' stop-color='%23cfe6ff'/>\
-<stop offset='100%' stop-color='%23d8dbe0'/>\
-</linearGradient></defs>\
-<rect width='100%' height='100%' fill='url(%23g)'/></svg>">
-    </a-assets>
+    <!-- Lights: ambient fill + 'sun' directional with soft shadows -->
+    <a-entity light="type: ambient; intensity: 0.45"></a-entity>
+    <a-entity id="sun" light="type: directionAL; intensity: 1.25; castShadow: true"
+              position="6 10 6" rotation="-45 30 0"></a-entity>
 
-    <!-- Soft lighting (simple & cheap) -->
-    <a-entity light="type: ambient; intensity: 0.6"></a-entity>
-    <a-entity light="type: directional; intensity: 0.6" position="0 6 -3"></a-entity>
-
-    <!-- Gradient background sky -->
-    <a-sky src="#skygrad" rotation="0 0 0"></a-sky>
-
-    <!-- RIG: keyboard on PC + thumbstick in VR; mouse look on desktop -->
-    <a-entity id="rig" position="0 1.6 0" movement-controls="controls: gamepad,keyboard; speed: 0.22">
-      <a-entity id="camera" camera look-controls></a-entity>
+    <!-- Rig: desktop keyboard + VR thumbstick; mouse look on desktop; laser in VR -->
+    <a-entity id="rig" position="0 1.6 5" movement-controls="controls: gamepad,keyboard; speed: 0.22">
+      <a-entity camera look-controls></a-entity>
       <a-entity laser-controls="hand: left"></a-entity>
       <a-entity laser-controls="hand: right"></a-entity>
     </a-entity>
 
-    <!-- Optional mouse cursor for clicking things (not required to move) -->
+    <!-- Optional mouse cursor for clicking (not required to move) -->
     <a-entity cursor="rayOrigin: mouse"></a-entity>
 
-    <!-- Floor: big plane with subtle grid to give motion cues -->
-    <a-plane rotation="-90 0 0" width="60" height="60" position="0 0 -15"
-             material="color: #e3e6ea; metalness: 0; roughness: 1; repeat: 60 60;
-                       src: data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'>\
-<rect width='20' height='20' fill='%23e3e6ea'/>\
-<path d='M0 0H20 M0 10H20 M0 20H20 M0 0V20 M10 0V20 M20 0V20' \
-stroke='%22%238c99a5%22' stroke-width='0.3' opacity='0.25'/>\
-</svg>">
-    </a-plane>
+    <!-- FLOOR: long corridor floor to walk on -->
+    <a-plane id="floor" rotation="-90 0 0" width="20" height="80" position="0 0 -40"
+             material="color: #e5e7ea; metalness: 0; roughness: 1"
+             shadow="receive: true"></a-plane>
 
-    <!-- Minimal “corridor / room” using stretched boxes -->
-    <!-- Start area -->
-    <a-box position="0 1 -2" depth="0.2" height="2" width="4" color="#b8c4d1"></a-box>
-    <!-- Left wall -->
-    <a-box position="-2 1 -10" depth="20" height="2" width="0.2" color="#b8c4d1"></a-box>
-    <!-- Right wall -->
-    <a-box position="2 1 -10" depth="20" height="2" width="0.2" color="#b8c4d1"></a-box>
-    <!-- Mid obstacle -->
-    <a-box position="0 0.75 -10" depth="0.5" height="1.5" width="1.5" color="#9fb3c8"></a-box>
-    <!-- Small turn (right) -->
-    <a-box position="4 1 -18" depth="6" height="2" width="0.2" rotation="0 90 0" color="#b8c4d1"></a-box>
-    <!-- Exit panel -->
-    <a-plane position="6 1.5 -18" rotation="0 -90 0" width="2.5" height="2"
-             material="color: #59d390"></a-plane>
-    <a-text value="EXIT" position="5.85 1.5 -18" rotation="0 -90 0"
-            align="center" width="4" color="#073b22"></a-text>
+    <!-- Walls to suggest a corridor / escape-room path -->
+    <!-- Entrance header -->
+    <a-box position="0 1.2 0" depth="0.25" height="2.4" width="5" color="#c6cfd8" shadow="cast: true"></a-box>
+    <!-- Left wall (long) -->
+    <a-box position="-2.5 1.2 -40" depth="80" height="2.4" width="0.25" color="#bac6d1" shadow="cast: true"></a-box>
+    <!-- Right wall (long) -->
+    <a-box position=" 2.5 1.2 -40" depth="80" height="2.4" width="0.25" color="#bac6d1" shadow="cast: true"></a-box>
 
-    <!-- A few props along the path to “guide” navigation -->
-    <a-sphere position="0 1 -6" radius="0.35" color="#ff6a6a"></a-sphere>
-    <a-box position="-1 0.75 -12" depth="0.8" height="1.5" width="0.8" color="#6aa0ff"></a-box>
-    <a-cone position="1.2 1 -15" radius-bottom="0.6" height="1.2" color="#ff8de1"></a-cone>
+    <!-- Simple props along the way (PBR materials that reflect the environment) -->
+    <a-sphere position="-1 0.8 -10" radius="0.4"
+              material="metalness: 1; roughness: 0.08; color: #888"
+              shadow="cast: true"></a-sphere>
+
+    <a-box position="1 0.9 -20" width="0.9" height="0.9" depth="0.9"
+           material="color: #aaccff; opacity: 0.35; transparent: true; metalness: 0.15; roughness: 0.05"
+           shadow="cast: true"></a-box>
+
+    <a-cone position="0 1.0 -30" radius-bottom="0.6" height="1.2"
+            material="color: #ff4fd7; metalness: 0.0; roughness: 0.25"
+            shadow="cast: true"></a-cone>
+
+    <!-- Small obstruction -->
+    <a-box position="0 0.75 -45" width="1.2" height="1.5" depth="0.6" color="#9fb3c8" shadow="cast: true"></a-box>
+
+    <!-- Exit panel at end -->
+    <a-plane position="0 1.5 -78" rotation="0 0 0" width="3" height="2"
+             material="color: #5ad08f" shadow="cast: true"></a-plane>
+    <a-text value="EXIT" position="0 1.5 -77.98" align="center" width="6" color="#063a21"></a-text>
 
   </a-scene>
+
+  <script>
+    // --- Day sky gradient + environment reflections (for realistic PBR) ---
+    // We generate a 2048x1024 equirectangular gradient (sky blue -> horizon gray) on a canvas,
+    // then feed it as THREE texture: background (visible) + PMREM (reflections).
+    const sceneEl = document.querySelector('a-scene');
+
+    function makeEquirectGradient(w=2048,h=1024){
+      const c = document.createElement('canvas'); c.width=w; c.height=h;
+      const g = c.getContext('2d');
+      const grad = g.createLinearGradient(0,0,0,h);
+      grad.addColorStop(0.00, '#9fc9ff');  // zenith sky
+      grad.addColorStop(0.65, '#cfe6ff');  // mid sky
+      grad.addColorStop(1.00, '#d8dbe0');  // horizon gray
+      g.fillStyle = grad; g.fillRect(0,0,w,h);
+      return new THREE.CanvasTexture(c);
+    }
+
+    sceneEl.addEventListener('loaded', () => {
+      // Set background + environment with PMREM for proper reflections
+      const renderer = sceneEl.renderer; if (!renderer) return;
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const tex = makeEquirectGradient();
+      if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+
+      // Visible background (replaces black) + PMREM env for reflections
+      sceneEl.object3D.background = tex;
+      const envRT = pmrem.fromEquirectangular(tex);
+      sceneEl.object3D.environment = envRT.texture;
+
+      // Soften sun shadows for nicer look
+      const sun = document.getElementById('sun').getObject3D('light');
+      if (sun && sun.shadow) {
+        sun.shadow.mapSize.set(1024,1024);
+        sun.shadow.radius = 3;
+        sun.shadow.bias = -0.0001;
+        sun.shadow.normalBias = 0.02;
+        const cam = sun.shadow.camera;
+        cam.near = 0.5; cam.far = 120;
+        cam.left = -20; cam.right = 20; cam.top = 20; cam.bottom = -20;
+        cam.updateProjectionMatrix();
+      }
+    });
+  </script>
 </body>
 </html>
